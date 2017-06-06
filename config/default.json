@@ -1,0 +1,27 @@
+{
+    "bunyan": {
+        "core": {
+            "name": "core",
+            "level": "info",
+            "streams": [{
+                "type": "rotating-file",
+                "path": "./log/core.log",
+                "period": "1d",
+                "count": 30,
+                "level": "info"
+            }]
+        }
+    },
+    "db": {
+        "client": "postgresql",
+        "connection": {
+            "host": "",
+            "database": "",
+            "user": "",
+            "password": ""
+        }
+    },
+    "upload": {
+        "path": "upload/"
+    }
+}

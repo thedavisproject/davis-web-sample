@@ -1,0 +1,33 @@
+{
+  "name": "davis-web-sample",
+  "version": "0.0.1",
+  "description": "Sample Web API application or the Davis Data Management and Visualization platform.",
+  "main": "server.js",
+  "author": "Joel Douglass (joel.douglass@velir.com)",
+  "license": "MIT",
+  "devDependencies": {
+    "chai": "^4.0.2",
+    "gulp": "^3.9.1",
+    "gulp-bump": "^2.7.0",
+    "gulp-eslint": "^3.0.1",
+    "gulp-mocha": "^4.3.1"
+  },
+  "dependencies": {
+    "awilix": "^2.2.6",
+    "awilix-express": "^0.11.0",
+    "body-parser": "^1.15.2",
+    "bunyan": "^1.8.1",
+    "config": "^1.21.0",
+    "davis-model": "thedavisproject/davis-model",
+    "davis-shared": "thedavisproject/davis-shared",
+    "davis-core": "thedavisproject/davis-core",
+    "davis-sql": "thedavisproject/davis-sql",
+    "davis-web": "thedavisproject/davis-web",
+    "express": "^4.13.4",
+    "helmet": "^2.1.0",
+    "morgan": "^1.7.0",
+    "passport": "^0.3.2",
+    "passport-local": "^1.0.0",
+    "ramda": "^0.21.0"
+  }
+}
