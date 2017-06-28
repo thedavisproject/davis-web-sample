@@ -20,7 +20,8 @@ container.registerFunction({
   dataQuery           : core.data.dataQuery,
   entityRepository    : core.entities.entityRepository,
   publish             : core.publish,
-  graphQL             : web.graphQL
+  graphQL             : web.graphQL,
+  entityLoaderFactory : web.entityLoaderFactory
 });
 
 container.registerValue({
