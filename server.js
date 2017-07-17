@@ -4,38 +4,42 @@ const config = require('config');
 const app = express();
 const web = require('davis-web');
 const core = require('davis-core');
-const { createContainer  } = require('awilix');
+const { createContainer, asValue, asFunction  } = require('awilix');
 const { scopePerRequest } = require('awilix-express');
+const cors = require('cors');
+//const passport = require('passport');
 
 const container = createContainer();
 
+app.use(cors());
+
+//app.use(passport.initialize());
 app.use(scopePerRequest(container));
 
-container.registerFunction({
-  csvExport           : core.data.export.csvExport,
-  dataAnalyze         : core.data.import.dataAnalyze,
-  individualGenerator : core.data.import.individualGenerator,
-  dataImport          : core.data.import.dataImport,
-  dataDelete          : core.data.dataDelete,
-  dataQuery           : core.data.dataQuery,
-  entityRepository    : core.entities.entityRepository,
-  publish             : core.publish,
-  graphQL             : web.graphQL,
-  entityLoaderFactory : web.entityLoaderFactory
+container.register({
+  csvExport           : asFunction(core.data.export.csvExport),
+  dataAnalyze         : asFunction(core.data.import.dataAnalyze),
+  individualGenerator : asFunction(core.data.import.individualGenerator),
+  dataImport          : asFunction(core.data.import.dataImport),
+  dataDelete          : asFunction(core.data.dataDelete),
+  dataQuery           : asFunction(core.data.dataQuery),
+  entityRepository    : asFunction(core.entities.entityRepository),
+  publish             : asFunction(core.publish),
+  graphQL             : asFunction(web.graphQL),
+  entityLoaderFactory : asFunction(web.entityLoaderFactory).singleton(),
+  storage             : asValue(require('davis-sql')(config.db)),
+  catalog             : asValue('web'),
+  timeStamp           : asValue(require('davis-shared').time),
+  user                : asValue({ id: 25 }) // TODO : Stub for now
 });
 
-container.registerValue({
-  storage: require('davis-sql')(config.db),
-  catalog: 'web',
-  timeStamp: require('davis-shared').time,
-  user: { id: 25 } // TODO: Stub for now
+app.use('/graphql', (req, res) => {
+  const gqlserver = container.resolve('graphQL').server;
+  gqlserver(req, res);
 });
-
-const gqlserver = container.resolve('graphQL').server;
-app.use('/graphql', gqlserver);
 
 app.get('/', function(req, res){
-  res.send('Welcome to Davis! This route doesn\'t do anything...');
+  res.send('Welcome to Davis!');
 });
 
 app.listen(port, function(){
