@@ -26,7 +26,9 @@ container.register({
   entityRepository    : asFunction(core.entities.entityRepository),
   publish             : asFunction(core.publish),
   graphQL             : asFunction(web.graphQL),
+  fileUploader        : asFunction(web.fileUploader),
   entityLoaderFactory : asFunction(web.entityLoaderFactory).singleton(),
+  config              : asValue(config),
   storage             : asValue(require('davis-sql')(config.db)),
   catalog             : asValue('web'),
   timeStamp           : asValue(require('davis-shared').time),
@@ -37,6 +39,10 @@ app.use('/graphql', (req, res) => {
   const gqlserver = container.resolve('graphQL').server;
   gqlserver(req, res);
 });
+
+// Attach the file uploader route
+const fileUploader = container.resolve('fileUploader');
+fileUploader('/upload', app);
 
 app.get('/', function(req, res){
   res.send('Welcome to Davis!');
