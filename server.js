@@ -78,7 +78,7 @@ function buildGraphQLServer(container){
           gqlVariableMatch } = container.resolve('graphql_import');
 
   const { gqlEntityQuery, gqlEntityMutation } = container.resolve('graphql_entityQuery');
-  const { gqlDataQuery, gqlDataAnalyze } = container.resolve('graphql_dataQuery');
+  const { gqlDataQuery, gqlDataAnalyze, gqlDataImport } = container.resolve('graphql_dataQuery');
 
   const registry = thread(newRegistry(),
     // Entity Read
@@ -125,7 +125,8 @@ function buildGraphQLServer(container){
     mutation: new graphql.GraphQLObjectType({
       name: 'Mutation',
       fields: {
-        entities: { type: getType('EntityMutation', registry), resolve: () => ({}) }
+        entities: { type: getType('EntityMutation', registry), resolve: () => ({}) },
+        import: gqlDataImport(registry)
       }
     })
   });
