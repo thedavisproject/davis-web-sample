@@ -35,11 +35,11 @@ container.register({
   dataAnalyze         : asFunction(core.data.import.dataAnalyze),
   individualGenerator : asFunction(core.data.import.individualGenerator),
   dataImport          : asFunction(core.data.import.dataImport),
+  csvParse            : asValue(core.data.import.parse.csvParser),
   dataDelete          : asFunction(core.data.dataDelete),
   dataQuery           : asFunction(core.data.dataQuery),
   entityRepository    : asFunction(core.entities.entityRepository),
   publish             : asFunction(core.publish),
-  //graphQLApi          : asFunction(web.graphQLApi),
   fileUploader        : asFunction(web.fileUploader),
   config              : asValue(config),
   storage             : asValue(require('davis-sql')(config.db)),
@@ -48,17 +48,18 @@ container.register({
   user                : asValue({ id: 25 }), // TODO : Stub for now
 
   // GraphQL Registry
-  graphql                : asValue(graphql),
+  graphql                     : asValue(graphql),
   graphql_entityLoaderFactory : asFunction(web.graphql.entityLoaderFactory).singleton(),
-  graphql_entityResolver : asFunction(web.graphql.entityResolver),
-  graphql_entity     : asFunction(web.graphql.model.entity),
-  graphql_folder     : asFunction(web.graphql.model.folder),
-  graphql_dataSet     : asFunction(web.graphql.model.dataSet),
-  graphql_variable     : asFunction(web.graphql.model.variable),
-  graphql_attribute     : asFunction(web.graphql.model.attribute),
-  graphql_entityQuery    : asFunction(web.graphql.entityQuery),
-  graphql_data : asFunction(web.graphql.model.data),
-  graphql_dataQuery    : asFunction(web.graphql.dataQuery)
+  graphql_entityResolver      : asFunction(web.graphql.entityResolver),
+  graphql_entity              : asFunction(web.graphql.model.entity),
+  graphql_folder              : asFunction(web.graphql.model.folder),
+  graphql_dataSet             : asFunction(web.graphql.model.dataSet),
+  graphql_variable            : asFunction(web.graphql.model.variable),
+  graphql_attribute           : asFunction(web.graphql.model.attribute),
+  graphql_entityQuery         : asFunction(web.graphql.entityQuery),
+  graphql_data                : asFunction(web.graphql.model.data),
+  graphql_import              : asFunction(web.graphql.model.import),
+  graphql_dataQuery           : asFunction(web.graphql.dataQuery)
 });
 
 function buildGraphQLServer(container){
@@ -73,9 +74,11 @@ function buildGraphQLServer(container){
           gqlQuantitativeFact,
           gqlIndividual,
           gqlDataSetQueryResults } = container.resolve('graphql_data');
+  const { gqlAttributeMatch,
+          gqlVariableMatch } = container.resolve('graphql_import');
 
   const { gqlEntityQuery, gqlEntityMutation } = container.resolve('graphql_entityQuery');
-  const { gqlDataQuery } = container.resolve('graphql_dataQuery');
+  const { gqlDataQuery, gqlDataAnalyze } = container.resolve('graphql_dataQuery');
 
   const registry = thread(newRegistry(),
     // Entity Read
@@ -103,7 +106,10 @@ function buildGraphQLServer(container){
     registerTypeFac(gqlCategoricalFact),
     registerTypeFac(gqlQuantitativeFact),
     registerTypeFac(gqlIndividual),
-    registerTypeFac(gqlDataSetQueryResults)
+    registerTypeFac(gqlDataSetQueryResults),
+    // Import
+    registerTypeFac(gqlAttributeMatch),
+    registerTypeFac(gqlVariableMatch)
   );
 
   const schema = new graphql.GraphQLSchema({
@@ -112,7 +118,8 @@ function buildGraphQLServer(container){
       name: 'Query',
       fields: {
         entities: { type: getType('EntityQuery', registry) , resolve: () => ({}) },
-        data: gqlDataQuery(registry)
+        data: gqlDataQuery(registry),
+        analyze: gqlDataAnalyze(registry)
       }
     }),
     mutation: new graphql.GraphQLObjectType({
