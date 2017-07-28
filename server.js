@@ -9,7 +9,7 @@ const { thread } = shared.fp;
 const { createContainer, asValue, asFunction  } = require('awilix');
 const { scopePerRequest } = require('awilix-express');
 const cors = require('cors');
-const { newRegistry, registerTypeFac, getType } = web.graphql.typeRegistry;
+const { newRegistry, registerTypeFac, getType, getAllTypes } = web.graphql.typeRegistry;
 const graphql = require('graphql');
 const GraphQLDate = require('graphql-date');
 const GraphQLJSON = require('graphql-type-json');
@@ -107,6 +107,7 @@ function buildGraphQLServer(container){
   );
 
   const schema = new graphql.GraphQLSchema({
+    types: getAllTypes(registry),
     query: new graphql.GraphQLObjectType({
       name: 'Query',
       fields: {
