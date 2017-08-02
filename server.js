@@ -80,7 +80,7 @@ function buildGraphQLServer(container){
           gqlVariableMatch } = container.resolve('graphql_import');
 
   const { gqlEntityQuery, gqlEntityMutation } = container.resolve('graphql_entityQuery');
-  const { gqlDataQuery, gqlDataAnalyze, gqlDataImport } = container.resolve('graphql_dataQuery');
+  const { gqlDataQueries, gqlDataMutation } = container.resolve('graphql_dataQuery');
 
   const registry = thread(newRegistry(),
     // Entity Read
@@ -111,7 +111,9 @@ function buildGraphQLServer(container){
     registerTypeFac(gqlDataSetQueryResults),
     // Import
     registerTypeFac(gqlAttributeMatch),
-    registerTypeFac(gqlVariableMatch)
+    registerTypeFac(gqlVariableMatch),
+    registerTypeFac(gqlDataQueries),
+    registerTypeFac(gqlDataMutation)
   );
 
   const schema = new graphql.GraphQLSchema({
@@ -120,15 +122,14 @@ function buildGraphQLServer(container){
       name: 'Query',
       fields: {
         entities: { type: getType('EntityQuery', registry) , resolve: () => ({}) },
-        data: gqlDataQuery(registry),
-        analyze: gqlDataAnalyze(registry)
+        data: { type: getType('DataQuery', registry), resolve: () => ({}) }
       }
     }),
     mutation: new graphql.GraphQLObjectType({
       name: 'Mutation',
       fields: {
         entities: { type: getType('EntityMutation', registry), resolve: () => ({}) },
-        import: gqlDataImport(registry)
+        data: { type: getType('DataMutation', registry), resolve: () => ({}) }
       }
     })
   });
