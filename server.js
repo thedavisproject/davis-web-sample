@@ -61,7 +61,8 @@ container.register({
   graphql_entityQuery         : asFunction(web.graphql.entityQuery),
   graphql_data                : asFunction(web.graphql.model.data),
   graphql_import              : asFunction(web.graphql.model.import),
-  graphql_dataQuery           : asFunction(web.graphql.dataQuery)
+  graphql_dataQuery           : asFunction(web.graphql.dataQuery),
+  graphql_publish             : asFunction(web.graphql.publish)
 });
 
 function buildGraphQLServer(container){
@@ -81,6 +82,7 @@ function buildGraphQLServer(container){
 
   const { gqlEntityQuery, gqlEntityMutation } = container.resolve('graphql_entityQuery');
   const { gqlDataQueries, gqlDataMutation } = container.resolve('graphql_dataQuery');
+  const { gqlPublish } = container.resolve('graphql_publish');
 
   const registry = thread(newRegistry(),
     // Entity Read
@@ -113,7 +115,9 @@ function buildGraphQLServer(container){
     registerTypeFac(gqlAttributeMatch),
     registerTypeFac(gqlVariableMatch),
     registerTypeFac(gqlDataQueries),
-    registerTypeFac(gqlDataMutation)
+    registerTypeFac(gqlDataMutation),
+    // Publish
+    registerTypeFac(gqlPublish)
   );
 
   const schema = new graphql.GraphQLSchema({
@@ -129,7 +133,8 @@ function buildGraphQLServer(container){
       name: 'Mutation',
       fields: {
         entities: { type: getType('EntityMutation', registry), resolve: () => ({}) },
-        data: { type: getType('DataMutation', registry), resolve: () => ({}) }
+        data: { type: getType('DataMutation', registry), resolve: () => ({}) },
+        publish: { type: getType('Publish', registry), resolve: () => ({}) },
       }
     })
   });
