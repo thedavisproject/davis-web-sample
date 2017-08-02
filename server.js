@@ -41,6 +41,8 @@ container.register({
   entityRepository    : asFunction(core.entities.entityRepository),
   publish             : asFunction(core.publish),
   fileUploader        : asFunction(web.fileUploader),
+  expressErrorHandler : asFunction(web.expressErrorHandler),
+  dataExport          : asFunction(web.dataExport),
   config              : asValue(config),
   storage             : asValue(require('davis-sql')(config.db)),
   catalog             : asValue('web'),
@@ -147,6 +149,10 @@ app.use('/graphql', (req, res) => {
 // Attach the file uploader route
 const fileUploader = container.resolve('fileUploader');
 fileUploader('/upload', app);
+
+// Attach the data exporter
+const dataExport = container.resolve('dataExport');
+dataExport('/export', app);
 
 app.get('/', function(req, res){
   res.send('Welcome to Davis!');
