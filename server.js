@@ -70,7 +70,7 @@ function buildGraphQLServer(container){
   const { gqlEntity, gqlEntityCreate, gqlEntityUpdate } = container.resolve('graphql_entity');
   const { gqlFolder, gqlFolderCreate, gqlFolderUpdate } = container.resolve('graphql_folder');
   const { gqlDataSet, gqlDataSetCreate, gqlDataSetUpdate } = container.resolve('graphql_dataSet');
-  const { gqlVariable, gqlVariableCreate, gqlVariableUpdate } = container.resolve('graphql_variable');
+  const { gqlVariableTypeEnum, gqlVariable, gqlVariableCreate, gqlVariableUpdate } = container.resolve('graphql_variable');
   const { gqlAttribute, gqlAttributeCreate, gqlAttributeUpdate } = container.resolve('graphql_attribute');
   const { gqlFact,
           gqlCategoricalFact,
@@ -90,6 +90,7 @@ function buildGraphQLServer(container){
     registerTypeFac(gqlEntity),
     registerTypeFac(gqlFolder),
     registerTypeFac(gqlDataSet),
+    registerTypeFac(gqlVariableTypeEnum),
     registerTypeFac(gqlVariable),
     registerTypeFac(gqlAttribute),
     registerTypeFac(gqlEntityQuery),
