@@ -74,7 +74,8 @@ function buildGraphQLServer(container){
   const { gqlAttribute, gqlAttributeCreate, gqlAttributeUpdate } = container.resolve('graphql_attribute');
   const { gqlFact,
           gqlCategoricalFact,
-          gqlQuantitativeFact,
+          gqlNumericalFact,
+          gqlTextFact,
           gqlIndividual,
           gqlDataSetQueryResults } = container.resolve('graphql_data');
   const { gqlAttributeMatch,
@@ -108,7 +109,8 @@ function buildGraphQLServer(container){
     // Data
     registerTypeFac(gqlFact),
     registerTypeFac(gqlCategoricalFact),
-    registerTypeFac(gqlQuantitativeFact),
+    registerTypeFac(gqlNumericalFact),
+    registerTypeFac(gqlTextFact),
     registerTypeFac(gqlIndividual),
     registerTypeFac(gqlDataSetQueryResults),
     // Import
