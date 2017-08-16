@@ -14,7 +14,8 @@ const graphql = require('graphql');
 const GraphQLDate = require('graphql-date');
 const GraphQLJSON = require('graphql-type-json');
 const GraphQLUnionInputType = require('graphql-union-input-type');
-const graphqlHTTP = require('express-graphql');
+const bodyParser = require('body-parser');
+const { graphqlExpress, graphiqlExpress } = require('apollo-server-express');
 
 //const passport = require('passport');
 
@@ -145,15 +146,20 @@ function buildGraphQLServer(container){
   return schema;
 }
 
-app.use('/graphql', (req, res) => {
-  const gqlSchema = buildGraphQLServer(container);
+// GraphQL Endpoint
+app.use('/graphql', 
+  bodyParser.json(),
+  (req, res) => {
 
-  // Delegate to graphqlHTTP
-  graphqlHTTP({
-    schema: gqlSchema,
-    graphiql: true
-  })(req, res);
-});
+    const gqlSchema = buildGraphQLServer(container);
+
+    graphqlExpress({
+      schema: gqlSchema
+    })(req, res);
+  });
+
+// GraphiQL IDE
+app.use('/graphiql', graphiqlExpress({ endpointURL: '/graphql' }));
 
 // Attach the file uploader route
 const fileUploader = container.resolve('fileUploader');
