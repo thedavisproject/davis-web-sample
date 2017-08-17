@@ -36,7 +36,7 @@ container.register({
   dataAnalyze         : asFunction(core.data.import.dataAnalyze),
   individualGenerator : asFunction(core.data.import.individualGenerator),
   dataImport          : asFunction(core.data.import.dataImport),
-  csvParse            : asValue(core.data.import.parse.csvParser),
+  parseDataFile       : asValue(core.data.import.parse.csvParser),
   dataDelete          : asFunction(core.data.dataDelete),
   dataQuery           : asFunction(core.data.dataQuery),
   entityRepository    : asFunction(core.entities.entityRepository),
