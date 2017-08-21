@@ -45,7 +45,7 @@ container.register({
   expressErrorHandler : asFunction(web.expressErrorHandler),
   dataExport          : asFunction(web.dataExport),
   config              : asValue(config),
-  storage             : asValue(require('davis-sql')(config.db)),
+  storage             : asValue(require('davis-sql')(config.storage)),
   catalog             : asValue('web'),
   timeStamp           : asValue(require('davis-shared').time),
   user                : asValue({ id: 25 }), // TODO : Stub for now
