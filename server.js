@@ -16,6 +16,7 @@ const GraphQLJSON = require('graphql-type-json');
 const GraphQLUnionInputType = require('graphql-union-input-type');
 const bodyParser = require('body-parser');
 const { graphqlExpress, graphiqlExpress } = require('apollo-server-express');
+const Queue = require('bull');
 
 //const passport = require('passport');
 
@@ -25,6 +26,9 @@ app.use(cors());
 
 //app.use(passport.initialize());
 app.use(scopePerRequest(container));
+
+// Set up the job processing queue
+const jobQueue = new Queue(config.jobQueue.name, config.jobQueue.config);
 
 // Stick the 3rd parth graphql types on the graphql object
 graphql.GraphQLDate = GraphQLDate;
@@ -41,10 +45,13 @@ container.register({
   dataQuery           : asFunction(core.data.dataQuery),
   entityRepository    : asFunction(core.entities.entityRepository),
   publish             : asFunction(core.publish),
+  importJob           : asFunction(core.jobs.importJob),
+  publishJob          : asFunction(core.jobs.publishJob),
   fileUploader        : asFunction(web.fileUploader),
   expressErrorHandler : asFunction(web.expressErrorHandler),
   dataExport          : asFunction(web.dataExport),
   config              : asValue(config),
+  jobQueue            : asValue(jobQueue),
   storage             : asValue(require('davis-sql')(config.storage)),
   catalog             : asValue('web'),
   timeStamp           : asValue(require('davis-shared').time),
@@ -59,12 +66,35 @@ container.register({
   graphql_dataSet             : asFunction(web.graphql.model.dataSet),
   graphql_variable            : asFunction(web.graphql.model.variable),
   graphql_attribute           : asFunction(web.graphql.model.attribute),
+  graphql_job                 : asFunction(web.graphql.model.job),
   graphql_entityQuery         : asFunction(web.graphql.entityQuery),
   graphql_data                : asFunction(web.graphql.model.data),
   graphql_import              : asFunction(web.graphql.model.import),
   graphql_dataQuery           : asFunction(web.graphql.dataQuery),
   graphql_publish             : asFunction(web.graphql.publish)
 });
+
+// Kick off the job queue processors. This does not nave to run within the same server process!
+// If needed, this could be extracted to a separate node service and even run in parallel on multiple
+// machines/threads if needed.
+const importJob = container.resolve('importJob');
+jobQueue.process(importJob.jobType, importJob.processor);
+const publishJob = container.resolve('publishJob');
+jobQueue.process(publishJob.jobType, publishJob.processor);
+
+const log = notice => data => {
+  console.log(notice, `Job # ${data.id}`);
+};
+
+jobQueue.on('error', log('Queue Error'));
+jobQueue.on('active', log('Queue Active'));
+jobQueue.on('stalled', log('Queue Stalled'));
+jobQueue.on('progress', log('Queue Progress'));
+jobQueue.on('completed', log('Queue Completed'));
+jobQueue.on('failed', log('Queue Failed'));
+jobQueue.on('paused', log('Queue Paused'));
+jobQueue.on('resumed', log('Queue Resumed'));
+jobQueue.on('cleaned', log('Queue Cleaned'));
 
 function buildGraphQLServer(container){
 
@@ -73,6 +103,7 @@ function buildGraphQLServer(container){
   const { gqlDataSet, gqlDataSetCreate, gqlDataSetUpdate } = container.resolve('graphql_dataSet');
   const { gqlVariableTypeEnum, gqlVariable, gqlVariableCreate, gqlVariableUpdate } = container.resolve('graphql_variable');
   const { gqlAttribute, gqlAttributeCreate, gqlAttributeUpdate } = container.resolve('graphql_attribute');
+  const { gqlJob, gqlJobQueries } = container.resolve('graphql_job');
   const { gqlFact,
           gqlCategoricalFact,
           gqlNumericalFact,
@@ -95,6 +126,8 @@ function buildGraphQLServer(container){
     registerTypeFac(gqlVariable),
     registerTypeFac(gqlAttribute),
     registerTypeFac(gqlEntityQuery),
+    registerTypeFac(gqlJob),
+    registerTypeFac(gqlJobQueries),
     // Entity Create
     registerTypeFac(gqlEntityCreate),
     registerTypeFac(gqlFolderCreate),
@@ -130,7 +163,8 @@ function buildGraphQLServer(container){
       name: 'Query',
       fields: {
         entities: { type: getType('EntityQuery', registry) , resolve: () => ({}) },
-        data: { type: getType('DataQuery', registry), resolve: () => ({}) }
+        data: { type: getType('DataQuery', registry), resolve: () => ({}) },
+        job: { type: getType('JobQuery', registry), resolve: () => ({}) }
       }
     }),
     mutation: new graphql.GraphQLObjectType({

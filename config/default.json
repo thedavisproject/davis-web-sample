@@ -26,6 +26,24 @@
     "schema": "master",
     "targets": ["web"]
   },
+  "jobQueue": {
+    "name": "Davis-Queue",
+    "config": {
+      "redis": {
+        "port": 6379,
+        "host": "",
+        "password": ""
+      },
+      "prefix": "davis-job-queue",
+      "settings": {
+        "lockDuration": 30000,
+        "stalledInterval": 30000,
+        "maxStalledCount": 1,
+        "guardInterval": 5000,
+        "retryPorcessDelay": 5000
+      }
+    }
+  },
   "upload": {
     "path": "upload/"
   }
