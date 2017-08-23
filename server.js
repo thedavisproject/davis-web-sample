@@ -188,7 +188,8 @@ app.use('/graphql',
     const gqlSchema = buildGraphQLServer(container);
 
     graphqlExpress({
-      schema: gqlSchema
+      schema: gqlSchema,
+      debug: true
     })(req, res);
   });
 
