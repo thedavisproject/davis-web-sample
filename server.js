@@ -183,14 +183,14 @@ function buildGraphQLServer(container){
 // GraphQL Endpoint
 app.use('/graphql', 
   bodyParser.json(),
-  (req, res) => {
+  (req, res, next) => {
 
     const gqlSchema = buildGraphQLServer(container);
 
     graphqlExpress({
       schema: gqlSchema,
       debug: true
-    })(req, res);
+    })(req, res, next);
   });
 
 // GraphiQL IDE
