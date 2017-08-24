@@ -27,6 +27,7 @@
     "davis-sql": "thedavisproject/davis-sql",
     "davis-web": "thedavisproject/davis-web",
     "express": "^4.13.4",
+    "express-graphql": "^0.6.7",
     "graphql": "^0.10.5",
     "graphql-date": "^1.0.3",
     "graphql-type-json": "^0.1.4",

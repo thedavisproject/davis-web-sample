@@ -14,6 +14,7 @@ const graphql = require('graphql');
 const GraphQLDate = require('graphql-date');
 const GraphQLJSON = require('graphql-type-json');
 const GraphQLUnionInputType = require('graphql-union-input-type');
+const graphqlHTTP = require('express-graphql');
 const bodyParser = require('body-parser');
 const { graphqlExpress, graphiqlExpress } = require('apollo-server-express');
 const Queue = require('bull');
@@ -180,7 +181,18 @@ function buildGraphQLServer(container){
   return schema;
 }
 
-// GraphQL Endpoint
+// Express Endpoint
+app.use('/graphql-express', (req, res, next) => {
+  const gqlSchema = buildGraphQLServer(container);
+
+  // Delegate to graphqlHTTP
+  graphqlHTTP({
+    schema: gqlSchema,
+    graphiql: true
+  })(req, res, next);
+});
+  
+// Apollo GraphQL Endpoint
 app.use('/graphql', 
   bodyParser.json(),
   (req, res, next) => {
