@@ -13,7 +13,6 @@ const { newRegistry, registerTypeFac, getType, getAllTypes } = web.graphql.typeR
 const graphql = require('graphql');
 const GraphQLDate = require('graphql-date');
 const GraphQLJSON = require('graphql-type-json');
-const GraphQLUnionInputType = require('graphql-union-input-type');
 const graphqlHTTP = require('express-graphql');
 const bodyParser = require('body-parser');
 const { graphqlExpress, graphiqlExpress } = require('apollo-server-express');
@@ -34,7 +33,6 @@ const jobQueue = new Queue(config.jobQueue.name, config.jobQueue.config);
 // Stick the 3rd parth graphql types on the graphql object
 graphql.GraphQLDate = GraphQLDate;
 graphql.GraphQLJSON = GraphQLJSON;
-graphql.GraphQLUnionInputType = GraphQLUnionInputType;
 
 container.register({
   csvExport           : asFunction(core.data.export.csvExport),
@@ -99,7 +97,7 @@ jobQueue.on('cleaned', log('Queue Cleaned'));
 
 function buildGraphQLServer(container){
 
-  const { gqlEntity, gqlEntityCreate, gqlEntityUpdate } = container.resolve('graphql_entity');
+  const { gqlEntity } = container.resolve('graphql_entity');
   const { gqlFolder, gqlFolderCreate, gqlFolderUpdate } = container.resolve('graphql_folder');
   const { gqlDataSet, gqlDataSetCreate, gqlDataSetUpdate } = container.resolve('graphql_dataSet');
   const { gqlVariableTypeEnum, gqlVariable, gqlVariableCreate, gqlVariableUpdate } = container.resolve('graphql_variable');
@@ -114,7 +112,11 @@ function buildGraphQLServer(container){
   const { gqlAttributeMatch,
           gqlVariableMatch } = container.resolve('graphql_import');
 
-  const { gqlEntityQuery, gqlEntityMutation } = container.resolve('graphql_entityQuery');
+  const { gqlEntityQuery, 
+          gqlEntityCreate,
+          gqlEntityUpdate,
+          gqlEntityDelete,
+          gqlEntityMutation } = container.resolve('graphql_entityQuery');
   const { gqlDataQueries, gqlDataMutation } = container.resolve('graphql_dataQuery');
   const { gqlPublish } = container.resolve('graphql_publish');
 
@@ -130,17 +132,18 @@ function buildGraphQLServer(container){
     registerTypeFac(gqlJob),
     registerTypeFac(gqlJobQueries),
     // Entity Create
-    registerTypeFac(gqlEntityCreate),
     registerTypeFac(gqlFolderCreate),
     registerTypeFac(gqlDataSetCreate),
     registerTypeFac(gqlVariableCreate),
     registerTypeFac(gqlAttributeCreate),
     // Entity Update
-    registerTypeFac(gqlEntityUpdate),
     registerTypeFac(gqlFolderUpdate),
     registerTypeFac(gqlDataSetUpdate),
     registerTypeFac(gqlVariableUpdate),
     registerTypeFac(gqlAttributeUpdate),
+    registerTypeFac(gqlEntityCreate),
+    registerTypeFac(gqlEntityUpdate),
+    registerTypeFac(gqlEntityDelete),
     registerTypeFac(gqlEntityMutation),
     // Data
     registerTypeFac(gqlFact),
