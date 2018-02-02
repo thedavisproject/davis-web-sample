@@ -109,7 +109,7 @@ function buildGraphQLServer(container){
           gqlTextFact,
           gqlIndividual,
           gqlDataSetQueryResults } = container.resolve('graphql_data');
-  const { gqlAttributeMatch,
+  const { gqlValueMatch,
           gqlVariableMatch } = container.resolve('graphql_import');
 
   const { gqlEntityQuery, 
@@ -153,7 +153,7 @@ function buildGraphQLServer(container){
     registerTypeFac(gqlIndividual),
     registerTypeFac(gqlDataSetQueryResults),
     // Import
-    registerTypeFac(gqlAttributeMatch),
+    registerTypeFac(gqlValueMatch),
     registerTypeFac(gqlVariableMatch),
     registerTypeFac(gqlDataQueries),
     registerTypeFac(gqlDataMutation),
