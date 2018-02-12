@@ -13,6 +13,7 @@ const { newRegistry, registerTypeFac, getType, getAllTypes } = web.graphql.typeR
 const graphql = require('graphql');
 const GraphQLDate = require('graphql-date');
 const GraphQLJSON = require('graphql-type-json');
+const GraphQLJSONNew = require('graphql-json-object-type').default;
 const graphqlHTTP = require('express-graphql');
 const bodyParser = require('body-parser');
 const { graphqlExpress, graphiqlExpress } = require('apollo-server-express');
@@ -108,11 +109,13 @@ function buildGraphQLServer(container){
           gqlNumericalFact,
           gqlTextFact,
           gqlIndividual,
-          gqlDataSetQueryResults } = container.resolve('graphql_data');
+          gqlDataSetQueryResults,
+          gqlDataImportColumnMapping
+  } = container.resolve('graphql_data');
   const { gqlValueMatch,
           gqlVariableMatch } = container.resolve('graphql_import');
 
-  const { gqlEntityQuery, 
+  const { gqlEntityQuery,
           gqlEntityCreate,
           gqlEntityUpdate,
           gqlEntityDelete,
@@ -152,6 +155,7 @@ function buildGraphQLServer(container){
     registerTypeFac(gqlTextFact),
     registerTypeFac(gqlIndividual),
     registerTypeFac(gqlDataSetQueryResults),
+    registerTypeFac(gqlDataImportColumnMapping),
     // Import
     registerTypeFac(gqlValueMatch),
     registerTypeFac(gqlVariableMatch),
@@ -194,9 +198,9 @@ app.use('/graphql-express', (req, res, next) => {
     graphiql: true
   })(req, res, next);
 });
-  
+
 // Apollo GraphQL Endpoint
-app.use('/graphql', 
+app.use('/graphql',
   bodyParser.json(),
   (req, res, next) => {
 
