@@ -13,7 +13,6 @@ const { newRegistry, registerTypeFac, getType, getAllTypes } = web.graphql.typeR
 const graphql = require('graphql');
 const GraphQLDate = require('graphql-date');
 const GraphQLJSON = require('graphql-type-json');
-const GraphQLJSONNew = require('graphql-json-object-type').default;
 const graphqlHTTP = require('express-graphql');
 const bodyParser = require('body-parser');
 const { graphqlExpress, graphiqlExpress } = require('apollo-server-express');
