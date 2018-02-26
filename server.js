@@ -70,12 +70,13 @@ container.register({
   graphql_data                : asFunction(web.graphql.model.data),
   graphql_import              : asFunction(web.graphql.model.import),
   graphql_dataQuery           : asFunction(web.graphql.dataQuery),
-  graphql_publish             : asFunction(web.graphql.publish)
+  graphql_publish             : asFunction(web.graphql.publish),
+  graphql_login               : asFunction(web.graphql.login)
 });
 
-// Kick off the job queue processors. This does not nave to run within the same server process!
+// Kick off the job queue processors. This does not need to run within the same server process!
 // If needed, this could be extracted to a separate node service and even run in parallel on multiple
-// machines/threads if needed.
+// machines/threads.
 const importJob = container.resolve('importJob');
 jobQueue.process(importJob.jobType, importJob.processor);
 const publishJob = container.resolve('publishJob');
@@ -121,6 +122,7 @@ function buildGraphQLServer(container){
           gqlEntityMutation } = container.resolve('graphql_entityQuery');
   const { gqlDataQueries, gqlDataMutation } = container.resolve('graphql_dataQuery');
   const { gqlPublish } = container.resolve('graphql_publish');
+  const { gqlLogin } = container.resolve('graphql_login');
 
   const registry = thread(newRegistry(),
     // Entity Read
@@ -169,6 +171,7 @@ function buildGraphQLServer(container){
     query: new graphql.GraphQLObjectType({
       name: 'Query',
       fields: {
+        login: gqlLogin,
         entities: { type: getType('EntityQuery', registry) , resolve: () => ({}) },
         data: { type: getType('DataQuery', registry), resolve: () => ({}) },
         job: { type: getType('JobQuery', registry), resolve: () => ({}) }
