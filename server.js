@@ -192,7 +192,9 @@ function buildGraphQLServer(container){
 }
 
 const authenticationMiddleware = container.resolve('middleware_authentication');
-const decode = shared.crypto.decode(config.crypto.encryptionKey, config.crypto.validationKey);
+const decode = shared.crypto.decode(
+  new Buffer(config.crypto.encryptionKey, 'hex'),
+  new Buffer(config.crypto.validationKey, 'hex'));
 
 const { login } = container.resolve('graphql_login');
 
@@ -204,7 +206,7 @@ const urlencodedParser = bodyParser.urlencoded({ extended: false });
 app.use(urlencodedParser);
 
 app.use(cookieParser());
-
+app.use(authenticationMiddleware);
 
 // Express Endpoint
 app.use('/graphql-express', (req, res, next) => {
@@ -272,6 +274,7 @@ app.post('/graphiql-login', (req, res) => {
         res.render('login', { message: error});
       },
       token => {
+        console.log(token);
         res.cookie(AUTH_COOKIE, token)
           .redirect('/graphiql');
       }
