@@ -1,5 +1,6 @@
 const port = process.env.PORT || 9000;
 const express = require('express');
+const cookieParser = require('cookie-parser');
 const config = require('config');
 const app = express();
 const web = require('davis-web');
@@ -18,13 +19,11 @@ const bodyParser = require('body-parser');
 const { graphqlExpress, graphiqlExpress } = require('apollo-server-express');
 const Queue = require('bull');
 
-//const passport = require('passport');
-
 const container = createContainer();
 
 app.use(cors());
+app.use(cookieParser());
 
-//app.use(passport.initialize());
 app.use(scopePerRequest(container));
 
 // Set up the job processing queue
@@ -55,6 +54,8 @@ container.register({
   catalog             : asValue('web'),
   timeStamp           : asValue(require('davis-shared').time),
   user                : asValue({ id: 25 }), // TODO : Stub for now
+
+  middleware_authentication   : asFunction(web.middleware.authentication),
 
   // GraphQL Registry
   graphql                     : asValue(graphql),
@@ -190,8 +191,12 @@ function buildGraphQLServer(container){
   return schema;
 }
 
+const authenticationMiddleware = container.resolve('middleware_authentication');
+
 // Express Endpoint
-app.use('/graphql-express', (req, res, next) => {
+app.use('/graphql-express',
+  authenticationMiddleware,
+  (req, res, next) => {
   const gqlSchema = buildGraphQLServer(container);
 
   // Delegate to graphqlHTTP
@@ -203,6 +208,7 @@ app.use('/graphql-express', (req, res, next) => {
 
 // Apollo GraphQL Endpoint
 app.use('/graphql',
+  //authenticationMiddleware,
   bodyParser.json(),
   (req, res, next) => {
 
@@ -215,7 +221,20 @@ app.use('/graphql',
   });
 
 // GraphiQL IDE
-app.use('/graphiql', graphiqlExpress({ endpointURL: '/graphql' }));
+app.use('/graphiql', (req, res, next) => {
+
+  const authToken = req.cookies.auth_token;
+
+  if(!authToken){
+    res.redirect('/graphiql-login');
+  }
+  else{
+    graphiqlExpress({
+      endpointURL: `/graphql`,
+      passHeader: `'Authorization': 'Bearer ${authToken}'`
+    })(req, res, next);
+  }
+});
 
 // Attach the file uploader route
 const fileUploader = container.resolve('fileUploader');
