@@ -1,6 +1,5 @@
 const port = process.env.PORT || 9000;
 const express = require('express');
-const cookieParser = require('cookie-parser');
 const config = require('config');
 const app = express();
 const web = require('davis-web');
@@ -16,13 +15,14 @@ const GraphQLDate = require('graphql-date');
 const GraphQLJSON = require('graphql-type-json');
 const graphqlHTTP = require('express-graphql');
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 const { graphqlExpress, graphiqlExpress } = require('apollo-server-express');
 const Queue = require('bull');
+const path = require('path');
 
 const container = createContainer();
 
 app.use(cors());
-app.use(cookieParser());
 
 app.use(scopePerRequest(container));
 
@@ -192,11 +192,22 @@ function buildGraphQLServer(container){
 }
 
 const authenticationMiddleware = container.resolve('middleware_authentication');
+const decode = shared.crypto.decode(config.crypto.encryptionKey, config.crypto.validationKey);
+
+const { login } = container.resolve('graphql_login');
+
+app.set('view engine', 'ejs'); // set up ejs for templating
+app.set('views', path.resolve(__dirname, './views')); // set up the views directory
+
+// create application/x-www-form-urlencoded parser
+const urlencodedParser = bodyParser.urlencoded({ extended: false });
+app.use(urlencodedParser);
+
+app.use(cookieParser());
+
 
 // Express Endpoint
-app.use('/graphql-express',
-  authenticationMiddleware,
-  (req, res, next) => {
+app.use('/graphql-express', (req, res, next) => {
   const gqlSchema = buildGraphQLServer(container);
 
   // Delegate to graphqlHTTP
@@ -208,7 +219,6 @@ app.use('/graphql-express',
 
 // Apollo GraphQL Endpoint
 app.use('/graphql',
-  //authenticationMiddleware,
   bodyParser.json(),
   (req, res, next) => {
 
@@ -220,21 +230,56 @@ app.use('/graphql',
     })(req, res, next);
   });
 
+
+const AUTH_COOKIE = 'graphql-token';
+
 // GraphiQL IDE
 app.use('/graphiql', (req, res, next) => {
 
-  const authToken = req.cookies.auth_token;
+  const token = req.cookies[AUTH_COOKIE];
 
-  if(!authToken){
-    res.redirect('/graphiql-login');
+  const isAuthorized = () => {
+    const token = req.cookies[AUTH_COOKIE];
+
+    // TODO check to make sure this token is valid and not expired
+    // decode(t).getOrElse(false);
+    if (!token) {
+      return false;
+    }
+    else {
+      return true;
+    }
+  };
+
+  if (!isAuthorized()){
+    res.render('login', { message: '' });
   }
   else{
     graphiqlExpress({
-      endpointURL: `/graphql`,
-      passHeader: `'Authorization': 'Bearer ${authToken}'`
+      endpointURL: '/graphql',
+      passHeader: `'Authorization': 'Bearer ${token}'`
     })(req, res, next);
   }
+
 });
+
+
+app.post('/graphiql-login', (req, res) => {
+  const { email, password } = req.body;
+
+  login(email, password)
+    .fork(
+      error => {
+        res.render('login', { message: error});
+      },
+      token => {
+        res.cookie(AUTH_COOKIE, token)
+          .redirect('/graphiql');
+      }
+    );
+});
+
+
 
 // Attach the file uploader route
 const fileUploader = container.resolve('fileUploader');

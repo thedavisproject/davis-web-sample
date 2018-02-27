@@ -27,6 +27,7 @@
     "davis-shared": "thedavisproject/davis-shared",
     "davis-sql": "thedavisproject/davis-sql",
     "davis-web": "thedavisproject/davis-web",
+    "ejs": "^2.5.7",
     "express": "^4.13.4",
     "express-graphql": "^0.6.7",
     "graphql": "^0.10.5",
