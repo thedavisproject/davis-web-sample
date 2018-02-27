@@ -3,7 +3,7 @@
 <head>
     <title>Davis GraphiQL</title>
 
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
 
     <style>
 
@@ -15,21 +15,23 @@
         }
 
         body {
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
         }
 
-        fieldset {
-            border: 0;
+        form {
+            width: 300px;
+            max-width: 100%;
         }
+
 
     </style>
 </head>
 <body>
 
-    <h1>Login</h1>
+    <h1>Davis Login</h1>
 
     <!-- show any messages that come back with authentication -->
     <% if (message && message.length > 0) { %>
@@ -38,20 +40,16 @@
 
     <!-- LOGIN FORM -->
     <form action="/graphiql-login" method="post">
-        <fieldset>
-            <label>
-                Email:
-                <div> <input type="text" name="email"> </div>
-            </label>
-        </fieldset>
-        <fieldset>
-            <label>
-                Password:
-                <div> <input type="password" name="password"> </div>
-            </label>
-        </fieldset>
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="text" name="email" class="form-control" id="email">
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" name="password" class="form-control" id="password">
+        </div>
 
-        <button type="submit">Login</button>
+        <button type="submit" class="btn btn-primary">Login</button>
     </form>
 
 </body>

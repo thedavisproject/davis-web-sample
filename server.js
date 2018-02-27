@@ -239,10 +239,9 @@ app.use('/graphiql', (req, res, next) => {
   const token = req.cookies[AUTH_COOKIE];
 
   const isAuthorized = () => {
-    const token = req.cookies[AUTH_COOKIE];
 
     // TODO check to make sure this token is valid and not expired
-    // decode(t).getOrElse(false);
+    // decode(token).getOrElse(false);
     if (!token) {
       return false;
     }
