@@ -192,6 +192,8 @@ function buildGraphQLServer(container){
 }
 
 const authenticationMiddleware = container.resolve('middleware_authentication');
+
+// TODO use a function that takes token expiration into account TBD
 const decode = shared.crypto.decode(
   new Buffer(config.crypto.encryptionKey, 'hex'),
   new Buffer(config.crypto.validationKey, 'hex'));
@@ -241,14 +243,12 @@ app.use('/graphiql', (req, res, next) => {
   const token = req.cookies[AUTH_COOKIE];
 
   const isAuthorized = () => {
-
-    // TODO check to make sure this token is valid and not expired
-    // decode(token).getOrElse(false);
     if (!token) {
       return false;
     }
     else {
-      return true;
+      const isValid = decode(token).getOrElse(false);
+      return isValid ? true : false;
     }
   };
 
