@@ -165,13 +165,6 @@ function buildGraphQLServer(container){
 
 const authenticationMiddleware = container.resolve('middleware_authentication');
 
-// TODO use a function that takes token expiration into account TBD
-const decode = shared.crypto.decode(
-  new Buffer(config.crypto.encryptionKey, 'hex'),
-  new Buffer(config.crypto.validationKey, 'hex'));
-
-const { login } = container.resolve('userAuthentication');
-
 // Set up Express
 const app = express();
 
@@ -231,34 +224,27 @@ const AUTH_COOKIE = 'graphql-token';
 // GraphiQL IDE
 app.use('/graphiql', (req, res, next) => {
 
+  const {userByToken} = req.scope.resolve('userAuthentication');
+
   const token = req.cookies[AUTH_COOKIE];
 
-  const isAuthorized = () => {
-    if (!token) {
-      return false;
-    }
-    else {
-      const isValid = decode(token).getOrElse(false);
-      return isValid ? true : false;
-    }
-  };
-
-  if (!isAuthorized()){
-    res.render('login', { message: '' });
-  }
-  else{
-    graphiqlExpress({
-      endpointURL: '/graphql',
-      passHeader: `'Authorization': 'Bearer ${token}'`
-    })(req, res, next);
-  }
-
+  userByToken(token).fork(
+    () => {
+      res.render('login', { message: '' });
+    },
+    () => {
+      graphiqlExpress({
+        endpointURL: '/graphql',
+        passHeader: `'Authorization': 'Bearer ${token}'`
+      })(req, res, next);
+    });
 });
 
 
 app.post('/graphiql-login', (req, res) => {
   const { email, password } = req.body;
 
+  const { login } = req.scope.resolve('userAuthentication');
   login(email, password)
     .fork(
       error => {
