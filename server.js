@@ -1,13 +1,11 @@
 const port = process.env.PORT || 9000;
 const express = require('express');
 const config = require('config');
-const app = express();
 const web = require('davis-web');
 const core = require('davis-core');
 const shared = require('davis-shared');
 const { thread } = shared.fp;
 const { createContainer, asValue, asFunction  } = require('awilix');
-const { scopePerRequest } = require('awilix-express');
 const cors = require('cors');
 const { newRegistry, registerTypeFac, getType, getAllTypes } = web.graphql.typeRegistry;
 const graphql = require('graphql');
@@ -22,10 +20,6 @@ const path = require('path');
 
 const container = createContainer();
 
-app.use(cors());
-
-app.use(scopePerRequest(container));
-
 // Set up the job processing queue
 const jobQueue = new Queue(config.jobQueue.name, config.jobQueue.config);
 
@@ -34,6 +28,11 @@ graphql.GraphQLDate = GraphQLDate;
 graphql.GraphQLJSON = GraphQLJSON;
 
 container.register({
+  config              : asValue(config),
+  storage             : asValue(require('davis-sql')(config.storage)),
+  catalog             : asValue('web'),
+  userAuthentication  : asFunction(core.auth.user),
+  timeStamp           : asValue(require('davis-shared').time),
   csvExport           : asFunction(core.data.export.csvExport),
   dataAnalyze         : asFunction(core.data.import.dataAnalyze),
   individualGenerator : asFunction(core.data.import.individualGenerator),
@@ -45,15 +44,10 @@ container.register({
   publish             : asFunction(core.publish),
   importJob           : asFunction(core.jobs.importJob),
   publishJob          : asFunction(core.jobs.publishJob),
-  fileUploader        : asFunction(web.fileUploader),
   expressErrorHandler : asFunction(web.expressErrorHandler),
   dataExport          : asFunction(web.dataExport),
-  config              : asValue(config),
+  fileUploader        : asFunction(web.fileUploader),
   jobQueue            : asValue(jobQueue),
-  storage             : asValue(require('davis-sql')(config.storage)),
-  catalog             : asValue('web'),
-  timeStamp           : asValue(require('davis-shared').time),
-  user                : asValue({ id: 25 }), // TODO : Stub for now
 
   middleware_authentication   : asFunction(web.middleware.authentication),
 
@@ -74,28 +68,6 @@ container.register({
   graphql_publish             : asFunction(web.graphql.publish),
   graphql_login               : asFunction(web.graphql.login)
 });
-
-// Kick off the job queue processors. This does not need to run within the same server process!
-// If needed, this could be extracted to a separate node service and even run in parallel on multiple
-// machines/threads.
-const importJob = container.resolve('importJob');
-jobQueue.process(importJob.jobType, importJob.processor);
-const publishJob = container.resolve('publishJob');
-jobQueue.process(publishJob.jobType, publishJob.processor);
-
-const log = notice => data => {
-  console.log(notice, `Job # ${data.id}`);
-};
-
-jobQueue.on('error', log('Queue Error'));
-jobQueue.on('active', log('Queue Active'));
-jobQueue.on('stalled', log('Queue Stalled'));
-jobQueue.on('progress', log('Queue Progress'));
-jobQueue.on('completed', log('Queue Completed'));
-jobQueue.on('failed', log('Queue Failed'));
-jobQueue.on('paused', log('Queue Paused'));
-jobQueue.on('resumed', log('Queue Resumed'));
-jobQueue.on('cleaned', log('Queue Cleaned'));
 
 function buildGraphQLServer(container){
 
@@ -198,7 +170,27 @@ const decode = shared.crypto.decode(
   new Buffer(config.crypto.encryptionKey, 'hex'),
   new Buffer(config.crypto.validationKey, 'hex'));
 
-const { login } = container.resolve('graphql_login');
+const { login } = container.resolve('userAuthentication');
+
+// Set up Express
+const app = express();
+
+// Initialize the context value in the request
+app.use(web.middleware.initContext);
+
+app.use(cors());
+
+// Resolve the user's token
+app.use(authenticationMiddleware);
+
+// Register the uer with the DI container
+app.use((req, res, next) => {
+  req.scope = container.createScope();
+  req.scope.register({
+    user: asValue(req.context.user)
+  });
+  return next();
+});
 
 app.set('view engine', 'ejs'); // set up ejs for templating
 app.set('views', path.resolve(__dirname, './views')); // set up the views directory
@@ -208,11 +200,10 @@ const urlencodedParser = bodyParser.urlencoded({ extended: false });
 app.use(urlencodedParser);
 
 app.use(cookieParser());
-app.use(authenticationMiddleware);
 
 // Express Endpoint
 app.use('/graphql-express', (req, res, next) => {
-  const gqlSchema = buildGraphQLServer(container);
+  const gqlSchema = buildGraphQLServer(req.scope);
 
   // Delegate to graphqlHTTP
   graphqlHTTP({
@@ -226,7 +217,7 @@ app.use('/graphql',
   bodyParser.json(),
   (req, res, next) => {
 
-    const gqlSchema = buildGraphQLServer(container);
+    const gqlSchema = buildGraphQLServer(req.scope);
 
     graphqlExpress({
       schema: gqlSchema,
@@ -274,26 +265,63 @@ app.post('/graphiql-login', (req, res) => {
         res.render('login', { message: error});
       },
       token => {
-        console.log(token);
         res.cookie(AUTH_COOKIE, token)
           .redirect('/graphiql');
       }
     );
 });
 
-
+const upload = require('multer')({
+  dest: config.upload.path
+});
 
 // Attach the file uploader route
-const fileUploader = container.resolve('fileUploader');
-fileUploader('/upload', app);
+const fileUploadHandler = (req, res, next) => {
+  const fileUpload = req.scope.resolve('fileUploader');
+  fileUpload(req, res, next);
+};
+
+app.post('/upload', upload.any(), fileUploadHandler);
 
 // Attach the data exporter
-const dataExport = container.resolve('dataExport');
-dataExport('/export', app);
+const exportHandler = (req, res, next) => {
+  const dataExport = req.scope.resolve('dataExport');
+  dataExport(req, res, next);
+};
+
+app.get('/export', exportHandler);
+app.get(`/export/:dataSetIds`, exportHandler);
 
 app.get('/', function(req, res){
   res.send('Welcome to Davis!');
 });
+
+// Kick off the job queue processors. This does not need to run within the same server process!
+// If needed, this could be extracted to a separate node service and even run in parallel on multiple
+// machines/threads.
+jobQueue.process(core.jobs.jobTypes.import, (job, done) => {
+  const importJob = container.resolve('importJob');
+  importJob.processor(job, done);
+});
+
+jobQueue.process(core.jobs.jobTypes.publish, (job, done) => {
+  const publishJob = container.resolve('publishJob');
+  publishJob.processor(job, done);
+});
+
+const log = notice => data => {
+  console.log(notice, `Job # ${data.id}`);
+};
+
+jobQueue.on('error', log('Queue Error'));
+jobQueue.on('active', log('Queue Active'));
+jobQueue.on('stalled', log('Queue Stalled'));
+jobQueue.on('progress', log('Queue Progress'));
+jobQueue.on('completed', log('Queue Completed'));
+jobQueue.on('failed', log('Queue Failed'));
+jobQueue.on('paused', log('Queue Paused'));
+jobQueue.on('resumed', log('Queue Resumed'));
+jobQueue.on('cleaned', log('Queue Cleaned'));
 
 app.listen(port, function(){
   console.log(`Davis server started on port ${port}`);
