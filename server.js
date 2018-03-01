@@ -66,7 +66,7 @@ container.register({
   graphql_import              : asFunction(web.graphql.model.import),
   graphql_dataQuery           : asFunction(web.graphql.dataQuery),
   graphql_publish             : asFunction(web.graphql.publish),
-  graphql_login               : asFunction(web.graphql.login)
+  graphql_authentication      : asFunction(web.graphql.authentication)
 });
 
 function buildGraphQLServer(container){
@@ -95,9 +95,11 @@ function buildGraphQLServer(container){
           gqlEntityMutation } = container.resolve('graphql_entityQuery');
   const { gqlDataQueries, gqlDataMutation } = container.resolve('graphql_dataQuery');
   const { gqlPublish } = container.resolve('graphql_publish');
-  const { gqlLogin } = container.resolve('graphql_login');
+  const { gqlAuthentication } = container.resolve('graphql_authentication');
 
   const registry = thread(newRegistry(),
+    // Authentication
+    registerTypeFac(gqlAuthentication),
     // Entity Read
     registerTypeFac(gqlEntity),
     registerTypeFac(gqlFolder),
@@ -144,7 +146,7 @@ function buildGraphQLServer(container){
     query: new graphql.GraphQLObjectType({
       name: 'Query',
       fields: {
-        login: gqlLogin,
+        authentication: { type: getType('Authentication', registry) , resolve: () => ({}) },
         entities: { type: getType('EntityQuery', registry) , resolve: () => ({}) },
         data: { type: getType('DataQuery', registry), resolve: () => ({}) },
         job: { type: getType('JobQuery', registry), resolve: () => ({}) }
