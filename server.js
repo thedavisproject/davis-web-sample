@@ -31,8 +31,9 @@ container.register({
   config              : asValue(config),
   storage             : asValue(require('davis-sql')(config.storage)),
   catalog             : asValue('web'),
-  userAuthentication  : asFunction(core.auth.user),
   timeStamp           : asValue(require('davis-shared').time),
+  userAuthentication  : asFunction(core.auth.user),
+
   csvExport           : asFunction(core.data.export.csvExport),
   dataAnalyze         : asFunction(core.data.import.dataAnalyze),
   individualGenerator : asFunction(core.data.import.individualGenerator),
@@ -51,10 +52,16 @@ container.register({
 
   middleware_authentication   : asFunction(web.middleware.authentication),
 
+  // API Resolvers
+  resolver_entityLoaderFactory : asFunction(web.resolvers.entityLoaderFactory),
+  resolver_entity              : asFunction(web.resolvers.entityResolver),
+  resolver_authentication      : asFunction(web.resolvers.authenticationResolver),
+  resolver_data                : asFunction(web.resolvers.dataResolver),
+  resolver_job                 : asFunction(web.resolvers.jobResolver),
+  resolver_publish             : asFunction(web.resolvers.publishResolver),
+
   // GraphQL Registry
   graphql                     : asValue(graphql),
-  graphql_entityLoaderFactory : asFunction(web.graphql.entityLoaderFactory).singleton(),
-  graphql_entityResolver      : asFunction(web.graphql.entityResolver),
   graphql_entity              : asFunction(web.graphql.model.entity),
   graphql_folder              : asFunction(web.graphql.model.folder),
   graphql_dataSet             : asFunction(web.graphql.model.dataSet),
