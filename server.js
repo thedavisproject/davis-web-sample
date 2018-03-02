@@ -53,12 +53,38 @@ container.register({
   middleware_authentication   : asFunction(web.middleware.authentication),
 
   // API Resolvers
-  resolver_entityLoaderFactory : asFunction(web.resolvers.entityLoaderFactory),
-  resolver_entity              : asFunction(web.resolvers.entityResolver),
-  resolver_authentication      : asFunction(web.resolvers.authenticationResolver),
-  resolver_data                : asFunction(web.resolvers.dataResolver),
-  resolver_job                 : asFunction(web.resolvers.jobResolver),
-  resolver_publish             : asFunction(web.resolvers.publishResolver),
+  authorization_rules:
+    asFunction(web.resolvers.authorization.rules),
+
+  // Authentication resolver
+  unprotected_resolver_authentication:
+    asFunction(web.resolvers.authenticationResolver),
+  resolver_authentication:
+    asFunction(web.resolvers.authorization.authorizedAuthenticationResolver),
+
+  // Data resolver
+  unprotected_resolver_data:
+    asFunction(web.resolvers.dataResolver),
+  resolver_data:
+    asFunction(web.resolvers.authorization.authorizedDataResolver),
+
+  // Entity resolver
+  unprotected_resolver_entity:
+    asFunction(web.resolvers.entityResolver),
+  resolver_entity:
+    asFunction(web.resolvers.authorization.authorizedEntityResolver),
+
+  // Job resolver
+  unprotected_resolver_job:
+    asFunction(web.resolvers.jobResolver),
+  resolver_job:
+    asFunction(web.resolvers.authorization.authorizedJobResolver),
+
+  // Publish resolver
+  unprotected_resolver_publish:
+    asFunction(web.resolvers.publishResolver),
+  resolver_publish:
+    asFunction(web.resolvers.authorization.authorizedPublishResolver),
 
   // GraphQL Registry
   graphql                     : asValue(graphql),
