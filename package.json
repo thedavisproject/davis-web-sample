@@ -21,6 +21,7 @@
     "config": "^1.21.0",
     "cookie-parser": "^1.4.3",
     "cors": "^2.8.4",
+    "data.task": "^3.1.1",
     "davis-core": "thedavisproject/davis-core",
     "davis-model": "thedavisproject/davis-model",
     "davis-shared": "thedavisproject/davis-shared",

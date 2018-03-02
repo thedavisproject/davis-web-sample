@@ -17,6 +17,7 @@ const cookieParser = require('cookie-parser');
 const { graphqlExpress, graphiqlExpress } = require('apollo-server-express');
 const Queue = require('bull');
 const path = require('path');
+const Task = require('data.task');
 
 const container = createContainer();
 
@@ -320,14 +321,43 @@ app.get('/', function(req, res){
 // Kick off the job queue processors. This does not need to run within the same server process!
 // If needed, this could be extracted to a separate node service and even run in parallel on multiple
 // machines/threads.
+const getJobScope = (job) => {
+
+  if(!job.data.userId){
+    return Task.rejected('Job is missing user data')
+  }
+
+  const {userById} = container.resolve('userAuthentication');
+
+  return userById(job.data.userId)
+    .map(user => {
+
+      const jobScope = container.createScope();
+
+      jobScope.register({
+        user: asValue(user)
+      });
+
+      return jobScope;
+    });
+};
+
 jobQueue.process(core.jobs.jobTypes.import, (job, done) => {
-  const importJob = container.resolve('importJob');
-  importJob.processor(job, done);
+  getJobScope(job).fork(
+    error => done(new Error(error)),
+    scope => {
+      const importJob = scope.resolve('importJob');
+      importJob.processor(job, done);
+    });
 });
 
 jobQueue.process(core.jobs.jobTypes.publish, (job, done) => {
-  const publishJob = container.resolve('publishJob');
-  publishJob.processor(job, done);
+  getJobScope(job).fork(
+    error => done(new Error(error)),
+    scope => {
+      const publishJob = scope.resolve('publishJob');
+      publishJob.processor(job, done);
+    });
 });
 
 const log = notice => data => {
