@@ -94,6 +94,7 @@ container.register({
   graphql_dataSet             : asFunction(web.graphql.model.dataSet),
   graphql_variable            : asFunction(web.graphql.model.variable),
   graphql_attribute           : asFunction(web.graphql.model.attribute),
+  graphql_user                : asFunction(web.graphql.model.user),
   graphql_job                 : asFunction(web.graphql.model.job),
   graphql_entityQuery         : asFunction(web.graphql.entityQuery),
   graphql_data                : asFunction(web.graphql.model.data),
@@ -110,6 +111,7 @@ function buildGraphQLServer(container){
   const { gqlDataSet, gqlDataSetCreate, gqlDataSetUpdate } = container.resolve('graphql_dataSet');
   const { gqlVariableTypeEnum, gqlVariable, gqlVariableCreate, gqlVariableUpdate } = container.resolve('graphql_variable');
   const { gqlAttribute, gqlAttributeCreate, gqlAttributeUpdate } = container.resolve('graphql_attribute');
+  const { gqlUser, gqlUserCreate, gqlUserUpdate } = container.resolve('graphql_user');
   const { gqlJob, gqlJobQueries } = container.resolve('graphql_job');
   const { gqlFact,
           gqlCategoricalFact,
@@ -141,6 +143,7 @@ function buildGraphQLServer(container){
     registerTypeFac(gqlVariableTypeEnum),
     registerTypeFac(gqlVariable),
     registerTypeFac(gqlAttribute),
+    registerTypeFac(gqlUser),
     registerTypeFac(gqlEntityQuery),
     registerTypeFac(gqlJob),
     registerTypeFac(gqlJobQueries),
@@ -149,11 +152,13 @@ function buildGraphQLServer(container){
     registerTypeFac(gqlDataSetCreate),
     registerTypeFac(gqlVariableCreate),
     registerTypeFac(gqlAttributeCreate),
+    registerTypeFac(gqlUserCreate),
     // Entity Update
     registerTypeFac(gqlFolderUpdate),
     registerTypeFac(gqlDataSetUpdate),
     registerTypeFac(gqlVariableUpdate),
     registerTypeFac(gqlAttributeUpdate),
+    registerTypeFac(gqlUserUpdate),
     registerTypeFac(gqlEntityCreate),
     registerTypeFac(gqlEntityUpdate),
     registerTypeFac(gqlEntityDelete),
