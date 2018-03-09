@@ -131,11 +131,13 @@ function buildGraphQLServer(container){
           gqlEntityMutation } = container.resolve('graphql_entityQuery');
   const { gqlDataQueries, gqlDataMutation } = container.resolve('graphql_dataQuery');
   const { gqlPublish } = container.resolve('graphql_publish');
-  const { gqlAuthentication } = container.resolve('graphql_authentication');
+  const { gqlAuthenticationQuery,
+          gqlAuthenticationMutation  } = container.resolve('graphql_authentication');
 
   const registry = thread(newRegistry(),
     // Authentication
-    registerTypeFac(gqlAuthentication),
+    registerTypeFac(gqlAuthenticationQuery),
+    registerTypeFac(gqlAuthenticationMutation),
     // Entity Read
     registerTypeFac(gqlEntity),
     registerTypeFac(gqlFolder),
@@ -185,7 +187,7 @@ function buildGraphQLServer(container){
     query: new graphql.GraphQLObjectType({
       name: 'Query',
       fields: {
-        authentication: { type: getType('Authentication', registry) , resolve: () => ({}) },
+        authentication: { type: getType('AuthenticationQuery', registry) , resolve: () => ({}) },
         entities: { type: getType('EntityQuery', registry) , resolve: () => ({}) },
         data: { type: getType('DataQuery', registry), resolve: () => ({}) },
         job: { type: getType('JobQuery', registry), resolve: () => ({}) }
@@ -197,6 +199,7 @@ function buildGraphQLServer(container){
         entities: { type: getType('EntityMutation', registry), resolve: () => ({}) },
         data: { type: getType('DataMutation', registry), resolve: () => ({}) },
         publish: { type: getType('Publish', registry), resolve: () => ({}) },
+        authentication: { type: getType('AuthenticationMutation', registry) , resolve: () => ({}) }
       }
     })
   });
