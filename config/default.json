@@ -24,7 +24,15 @@
     },
     "transaction-timeout": 120000,
     "schema": "master",
-    "targets": ["web"]
+    "targets": ["web"],
+    "customProperties": {
+      "folder": [],
+      "dataset": [],
+      "variable": [],
+      "attribute": [],
+      "user": [],
+      "action": []
+    }
   },
   "jobQueue": {
     "name": "Davis-Queue",
