@@ -124,7 +124,10 @@ function buildGraphQLServer(container){
   const { gqlValueMatch,
           gqlVariableMatch } = container.resolve('graphql_import');
 
-  const { gqlEntityQuery,
+  const { gqlEntityQueryOptionsSortTypeEnum,
+          gqlEntityQueryOptionsSort,
+          gqlEntityQueryOptions,
+          gqlEntityQuery,
           gqlEntityCreate,
           gqlEntityUpdate,
           gqlEntityDelete,
@@ -146,6 +149,9 @@ function buildGraphQLServer(container){
     registerTypeFac(gqlVariable),
     registerTypeFac(gqlAttribute),
     registerTypeFac(gqlUser),
+    registerTypeFac(gqlEntityQueryOptionsSortTypeEnum),
+    registerTypeFac(gqlEntityQueryOptionsSort),
+    registerTypeFac(gqlEntityQueryOptions),
     registerTypeFac(gqlEntityQuery),
     registerTypeFac(gqlJob),
     registerTypeFac(gqlJobQueries),
