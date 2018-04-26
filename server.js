@@ -28,9 +28,11 @@ const jobQueue = new Queue(config.jobQueue.name, config.jobQueue.config);
 graphql.GraphQLDate = GraphQLDate;
 graphql.GraphQLJSON = GraphQLJSON;
 
+const davisSql = require('davis-sql')(config.storage);
+
 container.register({
   config              : asValue(config),
-  storage             : asValue(require('davis-sql')(config.storage)),
+  storage             : asValue(davisSql.storageApi()),
   catalog             : asValue('web'),
   timeStamp           : asValue(require('davis-shared').time),
   userAuthentication  : asFunction(core.auth.user),
